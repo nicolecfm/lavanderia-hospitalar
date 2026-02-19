@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if hospital else 'Novo' }} Hospital - Lavanderia Hospitalar{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="fw-bold">
+            <i class="bi bi-building-cross me-2 text-primary"></i>
+            {{ 'Editar Hospital' if hospital else 'Novo Hospital' }}
+        </h2>
+    </div>
+    <div class="col-auto">
+        <a href="/hospitais" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-4">
+                <form id="hospitalForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nome" name="nome"
+                               value="{{ hospital.nome if hospital else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">CNPJ</label>
+                        <input type="text" class="form-control" id="cnpj" name="cnpj"
+                               placeholder="00.000.000/0001-00"
+                               value="{{ hospital.cnpj if hospital else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Endereço</label>
+                        <input type="text" class="form-control" id="endereco" name="endereco"
+                               value="{{ hospital.endereco if hospital else '' }}">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Telefone</label>
+                            <input type="text" class="form-control" id="telefone" name="telefone"
+                                   placeholder="(00) 0000-0000"
+                                   value="{{ hospital.telefone if hospital else '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   value="{{ hospital.email if hospital else '' }}">
+                        </div>
+                    </div>
+                    {% if hospital %}
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="ativo" name="ativo"
+                                   {{ 'checked' if hospital.ativo else '' }}>
+                            <label class="form-check-label fw-semibold" for="ativo">Ativo</label>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div id="alertContainer"></div>
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="/hospitais" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>
+                            {{ 'Salvar Alterações' if hospital else 'Criar Hospital' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const token = localStorage.getItem('access_token');
+const hospitalId = {{ '"' + hospital.id|string + '"' if hospital else 'null' }};
+
+document.getElementById('hospitalForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = {
+        nome: document.getElementById('nome').value,
+        cnpj: document.getElementById('cnpj').value || null,
+        endereco: document.getElementById('endereco').value || null,
+        telefone: document.getElementById('telefone').value || null,
+        email: document.getElementById('email').value || null,
+    };
+    {% if hospital %}
+    const ativoEl = document.getElementById('ativo');
+    if (ativoEl) body.ativo = ativoEl.checked;
+    {% endif %}
+
+    const url = hospitalId ? `/api/v1/hospitais/${hospitalId}` : '/api/v1/hospitais/';
+    const method = hospitalId ? 'PUT' : 'POST';
+
+    try {
+        const resp = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(body),
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            window.location.href = '/hospitais';
+        } else {
+            showAlert(data.detail || 'Erro ao salvar hospital.', 'danger');
+        }
+    } catch (err) {
+        showAlert('Erro de conexão.', 'danger');
+    }
+});
+
+function showAlert(msg, type) {
+    document.getElementById('alertContainer').innerHTML =
+        `<div class="alert alert-${type} alert-dismissible fade show">${msg}
+         <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+}
+</script>
+{% endblock %}

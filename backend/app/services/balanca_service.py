@@ -35,6 +35,16 @@ def registrar_pesagem(
 ) -> Pesagem:
     """Persiste uma nova pesagem e atualiza o status da gaiola."""
     ts = timestamp or datetime.now(timezone.utc)
+
+    # Calcular divergência em relação à pesagem de saída do hospital
+    divergencia: float | None = None
+    alerta = False
+    if tipo_pesagem != TipoPesagem.SAIDA_HOSPITAL:
+        peso_saida = _get_peso_saida(gaiola)
+        if peso_saida is not None and peso_saida > 0:
+            divergencia = round(((float(peso) - peso_saida) / peso_saida) * 100, 2)
+            alerta = abs(divergencia) > LIMITE_DIVERGENCIA_PADRAO
+
     pesagem = Pesagem(
         gaiola_id=gaiola.id,
         tipo_pesagem=tipo_pesagem,
@@ -42,6 +52,8 @@ def registrar_pesagem(
         balanca_id=balanca_id,
         timestamp=ts,
         usuario_id=usuario_id,
+        divergencia_percentual=divergencia,
+        alerta_divergencia=alerta,
         observacoes=observacoes,
     )
     db.add(pesagem)
@@ -53,6 +65,14 @@ def registrar_pesagem(
     db.commit()
     db.refresh(pesagem)
     return pesagem
+
+
+def _get_peso_saida(gaiola: Gaiola) -> float | None:
+    """Retorna o peso de saída do hospital para a gaiola, se houver."""
+    for p in gaiola.pesagens:
+        if p.tipo_pesagem == TipoPesagem.SAIDA_HOSPITAL:
+            return float(p.peso)
+    return None
 
 
 def calcular_divergencia(pesagens: list[Pesagem]) -> float | None:

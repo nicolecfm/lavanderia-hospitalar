@@ -1,8 +1,7 @@
 import io
 import uuid as _uuid
-import os
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -11,25 +10,9 @@ from app.models.hospital import Hospital
 from app.schemas.gaiola import GaiolaCreate, GaiolaUpdate, GaiolaResponse
 from app.utils.dependencies import get_current_active_user
 from app.models.user import Usuario
-from app.services import notificacao_service
+from app.services import notificacao_service, qrcode_service
 
 router = APIRouter(prefix="/api/v1/gaiolas", tags=["gaiolas"])
-
-QR_DIR = "frontend/static/img/qrcodes"
-
-
-def _generate_qr_code(codigo: str) -> str:
-    """Generate QR code image and return URL path."""
-    try:
-        import qrcode
-        os.makedirs(QR_DIR, exist_ok=True)
-        img = qrcode.make(codigo)
-        filename = f"{codigo.replace('/', '_')}.png"
-        path = os.path.join(QR_DIR, filename)
-        img.save(path)
-        return f"/static/img/qrcodes/{filename}"
-    except Exception:
-        return None
 
 
 def _build_response(gaiola: Gaiola) -> dict:
@@ -67,6 +50,7 @@ def list_gaiolas(
 @router.post("/", response_model=GaiolaResponse, status_code=201)
 def create_gaiola(
     gaiola: GaiolaCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
@@ -77,8 +61,14 @@ def create_gaiola(
     if not hospital:
         raise HTTPException(status_code=404, detail="Hospital não encontrado")
     db_gaiola = Gaiola(**gaiola.model_dump())
-    db_gaiola.qr_code_url = _generate_qr_code(gaiola.codigo)
     db.add(db_gaiola)
+    db.flush()
+    base_url = str(request.base_url).rstrip("/")
+    db_gaiola.qr_code_url = qrcode_service.salvar_qrcode(
+        codigo=db_gaiola.codigo,
+        gaiola_id=str(db_gaiola.id),
+        base_url=base_url,
+    )
     db.commit()
     db.refresh(db_gaiola)
     return _build_response(db_gaiola)
@@ -132,11 +122,10 @@ def get_qrcode(
     if not gaiola:
         raise HTTPException(status_code=404, detail="Gaiola não encontrada")
     try:
-        import qrcode
-        img = qrcode.make(gaiola.codigo)
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        buf.seek(0)
-        return StreamingResponse(buf, media_type="image/png")
+        data = qrcode_service.gerar_qrcode_bytes(
+            codigo=gaiola.codigo,
+            gaiola_id=str(gaiola.id),
+        )
+        return StreamingResponse(io.BytesIO(data), media_type="image/png")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao gerar QR Code: {str(e)}")

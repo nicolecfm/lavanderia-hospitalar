@@ -229,6 +229,49 @@ def hospitais_page(request: Request, db: Session = Depends(get_db)):
     })
 
 
+@app.get("/hospitais/novo", response_class=HTMLResponse)
+def hospital_create_page(request: Request, db: Session = Depends(get_db)):
+    user = _get_user_or_redirect(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    return templates.TemplateResponse("hospitais/form.html", {
+        "request": request,
+        "user": user,
+        "hospital": None,
+    })
+
+
+@app.get("/hospitais/{hospital_id}", response_class=HTMLResponse)
+def hospital_detail_page(request: Request, hospital_id: str, db: Session = Depends(get_db)):
+    user = _get_user_or_redirect(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+    if not hospital:
+        raise HTTPException(status_code=404, detail="Hospital não encontrado")
+    return templates.TemplateResponse("hospitais/detail.html", {
+        "request": request,
+        "user": user,
+        "hospital": hospital,
+        "gaiolas": hospital.gaiolas,
+    })
+
+
+@app.get("/hospitais/{hospital_id}/editar", response_class=HTMLResponse)
+def hospital_edit_page(request: Request, hospital_id: str, db: Session = Depends(get_db)):
+    user = _get_user_or_redirect(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+    if not hospital:
+        raise HTTPException(status_code=404, detail="Hospital não encontrado")
+    return templates.TemplateResponse("hospitais/form.html", {
+        "request": request,
+        "user": user,
+        "hospital": hospital,
+    })
+
+
 @app.get("/pesagens", response_class=HTMLResponse)
 def pesagens_page(request: Request, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)

@@ -23,6 +23,8 @@ def _build_response(p: Pesagem) -> dict:
         "balanca_id": p.balanca_id,
         "timestamp": p.timestamp,
         "usuario_id": p.usuario_id,
+        "divergencia_percentual": float(p.divergencia_percentual) if p.divergencia_percentual is not None else None,
+        "alerta_divergencia": p.alerta_divergencia or False,
         "observacoes": p.observacoes,
         "gaiola_codigo": p.gaiola.codigo if p.gaiola else None,
     }
