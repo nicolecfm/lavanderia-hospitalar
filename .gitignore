@@ -35,3 +35,4 @@ Thumbs.db
 
 # Generated QR codes
 frontend/static/img/qrcodes/
+backend/frontend/
