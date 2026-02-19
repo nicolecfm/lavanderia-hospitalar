@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Nova Gaiola - Lavanderia Hospitalar{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/gaiolas">Gaiolas</a></li>
+                <li class="breadcrumb-item active">Nova Gaiola</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold"><i class="bi bi-plus-circle me-2 text-primary"></i>Nova Gaiola</h2>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-4">
+                <div id="alertContainer"></div>
+                <form id="formGaiola">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Código da Gaiola <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="codigo" name="codigo"
+                               placeholder="Ex: GAI-001" required>
+                        <div class="form-text">Código único de identificação da gaiola</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Hospital <span class="text-danger">*</span></label>
+                        <select class="form-select" id="hospital_id" name="hospital_id" required>
+                            <option value="">Selecione um hospital...</option>
+                            {% for h in hospitais %}
+                            <option value="{{ h.id }}">{{ h.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Observações</label>
+                        <textarea class="form-control" id="observacoes" name="observacoes" rows="3"
+                                  placeholder="Informações adicionais sobre o conteúdo da gaiola..."></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i>Cadastrar Gaiola
+                        </button>
+                        <a href="/gaiolas" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('formGaiola').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const token = getCookie('access_token');
+    const data = {
+        codigo: document.getElementById('codigo').value,
+        hospital_id: document.getElementById('hospital_id').value,
+        observacoes: document.getElementById('observacoes').value || null,
+    };
+    try {
+        const resp = await fetch('/api/v1/gaiolas/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+            body: JSON.stringify(data)
+        });
+        const json = await resp.json();
+        if (resp.ok) {
+            showAlert('Gaiola cadastrada com sucesso!', 'success');
+            setTimeout(() => window.location.href = '/gaiolas', 1200);
+        } else {
+            showAlert(json.detail || 'Erro ao cadastrar gaiola', 'danger');
+        }
+    } catch(err) {
+        showAlert('Erro de conexão', 'danger');
+    }
+});
+</script>
+{% endblock %}

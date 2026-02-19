@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Gaiola {{ gaiola.codigo }} - Lavanderia Hospitalar{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/gaiolas">Gaiolas</a></li>
+                <li class="breadcrumb-item active">{{ gaiola.codigo }}</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold">
+            <i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Gaiola: {{ gaiola.codigo }}
+        </h2>
+    </div>
+    <div class="col-auto">
+        <a href="/api/v1/gaiolas/{{ gaiola.id }}/qrcode" target="_blank" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-qr-code me-1"></i>QR Code
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Info Card -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Informações</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr>
+                        <td class="text-muted">Código:</td>
+                        <td class="fw-semibold">{{ gaiola.codigo }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Hospital:</td>
+                        <td>{{ gaiola.hospital.nome if gaiola.hospital else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Status:</td>
+                        <td>
+                            <span class="badge status-badge-{{ gaiola.status.value | lower | replace('_', '-') }}">
+                                {{ gaiola.status.value | replace('_', ' ') }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Criada em:</td>
+                        <td class="small">{{ gaiola.data_criacao.strftime('%d/%m/%Y %H:%M') if gaiola.data_criacao else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Observações:</td>
+                        <td class="small">{{ gaiola.observacoes or '-' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Update Status -->
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold"><i class="bi bi-pencil me-2 text-warning"></i>Atualizar Status</h5>
+            </div>
+            <div class="card-body">
+                <div id="alertStatus"></div>
+                <select class="form-select mb-2" id="novoStatus">
+                    {% for s in status_list %}
+                    <option value="{{ s }}" {% if s == gaiola.status.value %}selected{% endif %}>
+                        {{ s | replace('_', ' ') }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-warning w-100" onclick="atualizarStatus('{{ gaiola.id }}')">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Atualizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="col-md-8">
+        <!-- Pesagens -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-line me-2 text-info"></i>Pesagens</h5>
+            </div>
+            <div class="card-body">
+                {% if gaiola.pesagens %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr><th>Tipo</th><th>Peso (kg)</th><th>Balança</th><th>Data/Hora</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for p in gaiola.pesagens %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ p.tipo_pesagem.value | replace('_', ' ') }}</span></td>
+                            <td class="fw-semibold">{{ "%.3f"|format(p.peso|float) }}</td>
+                            <td class="text-muted small">{{ p.balanca_id or '-' }}</td>
+                            <td class="text-muted small">{{ p.timestamp.strftime('%d/%m/%Y %H:%M') if p.timestamp else '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3"><i class="bi bi-inbox me-2"></i>Nenhuma pesagem registrada</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Processos -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0"><i class="bi bi-gear me-2 text-success"></i>Processos</h5>
+            </div>
+            <div class="card-body">
+                {% if gaiola.processos %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr><th>Etapa</th><th>Início</th><th>Fim</th><th>Máquina</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for p in gaiola.processos %}
+                        <tr>
+                            <td><span class="badge bg-success">{{ p.etapa.value }}</span></td>
+                            <td class="text-muted small">{{ p.data_inicio.strftime('%d/%m/%Y %H:%M') if p.data_inicio else '-' }}</td>
+                            <td class="text-muted small">{{ p.data_fim.strftime('%d/%m/%Y %H:%M') if p.data_fim else '<span class="text-warning">Em andamento</span>' }}</td>
+                            <td class="text-muted small">{{ p.maquina_id or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3"><i class="bi bi-inbox me-2"></i>Nenhum processo registrado</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Transportes -->
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0"><i class="bi bi-truck me-2 text-warning"></i>Transportes</h5>
+            </div>
+            <div class="card-body">
+                {% if gaiola.transportes %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr><th>Tipo</th><th>Motorista</th><th>Veículo</th><th>Saída</th><th>Chegada</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for t in gaiola.transportes %}
+                        <tr>
+                            <td><span class="badge bg-warning text-dark">{{ t.tipo.value }}</span></td>
+                            <td class="small">{{ t.motorista or '-' }}</td>
+                            <td class="small">{{ t.veiculo or '-' }}</td>
+                            <td class="text-muted small">{{ t.data_saida.strftime('%d/%m/%Y %H:%M') if t.data_saida else '-' }}</td>
+                            <td class="text-muted small">{{ t.data_chegada.strftime('%d/%m/%Y %H:%M') if t.data_chegada else '-' }}</td>
+                            <td><span class="badge bg-{{ 'success' if t.status.value == 'entregue' else 'warning text-dark' }}">{{ t.status.value }}</span></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3"><i class="bi bi-inbox me-2"></i>Nenhum transporte registrado</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function atualizarStatus(gaiola_id) {
+    const token = getCookie('access_token');
+    const status = document.getElementById('novoStatus').value;
+    try {
+        const resp = await fetch(`/api/v1/gaiolas/${gaiola_id}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+            body: JSON.stringify({status})
+        });
+        const json = await resp.json();
+        if (resp.ok) {
+            showAlert('Status atualizado com sucesso!', 'success', 'alertStatus');
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showAlert(json.detail || 'Erro ao atualizar', 'danger', 'alertStatus');
+        }
+    } catch(err) {
+        showAlert('Erro de conexão', 'danger', 'alertStatus');
+    }
+}
+</script>
+{% endblock %}
