@@ -56,6 +56,24 @@ app.include_router(processos.router)
 app.include_router(relatorios.router)
 
 
+# ─── Notifications API ─────────────────────────────────────────────────────────
+
+from fastapi import APIRouter as _APIRouter
+from app.services import notificacao_service as _ns
+from app.utils.dependencies import get_current_active_user as _get_user
+
+_notif_router = _APIRouter(prefix="/api/v1/notificacoes", tags=["notificacoes"])
+
+
+@_notif_router.get("/")
+def get_notificacoes(limite: int = 50, current_user=Depends(_get_user)):
+    """Retorna as últimas notificações de mudança de status."""
+    return _ns.get_notificacoes_recentes(limite)
+
+
+app.include_router(_notif_router)
+
+
 # ─── Web Routes ────────────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)

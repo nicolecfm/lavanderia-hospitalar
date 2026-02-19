@@ -1,4 +1,5 @@
 import io
+import uuid as _uuid
 import os
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,6 +11,7 @@ from app.models.hospital import Hospital
 from app.schemas.gaiola import GaiolaCreate, GaiolaUpdate, GaiolaResponse
 from app.utils.dependencies import get_current_active_user
 from app.models.user import Usuario
+from app.services import notificacao_service
 
 router = APIRouter(prefix="/api/v1/gaiolas", tags=["gaiolas"])
 
@@ -88,7 +90,7 @@ def get_gaiola(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    gaiola = db.query(Gaiola).filter(Gaiola.id == gaiola_id).first()
+    gaiola = db.query(Gaiola).filter(Gaiola.id == _uuid.UUID(gaiola_id)).first()
     if not gaiola:
         raise HTTPException(status_code=404, detail="Gaiola não encontrada")
     return _build_response(gaiola)
@@ -101,14 +103,22 @@ def update_gaiola(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    gaiola = db.query(Gaiola).filter(Gaiola.id == gaiola_id).first()
+    gaiola = db.query(Gaiola).filter(Gaiola.id == _uuid.UUID(gaiola_id)).first()
     if not gaiola:
         raise HTTPException(status_code=404, detail="Gaiola não encontrada")
+    status_anterior = gaiola.status.value
     update_data = gaiola_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(gaiola, key, value)
     db.commit()
     db.refresh(gaiola)
+    if gaiola.status.value != status_anterior:
+        notificacao_service.notificar_mudanca_status(
+            gaiola_codigo=gaiola.codigo,
+            status_anterior=status_anterior,
+            status_novo=gaiola.status.value,
+            usuario=current_user.email,
+        )
     return _build_response(gaiola)
 
 
@@ -118,7 +128,7 @@ def get_qrcode(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    gaiola = db.query(Gaiola).filter(Gaiola.id == gaiola_id).first()
+    gaiola = db.query(Gaiola).filter(Gaiola.id == _uuid.UUID(gaiola_id)).first()
     if not gaiola:
         raise HTTPException(status_code=404, detail="Gaiola não encontrada")
     try:

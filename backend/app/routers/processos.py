@@ -1,4 +1,5 @@
 from typing import List, Optional
+import uuid as _uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -65,7 +66,7 @@ def update_processo(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    processo = db.query(Processo).filter(Processo.id == processo_id).first()
+    processo = db.query(Processo).filter(Processo.id == _uuid.UUID(processo_id)).first()
     if not processo:
         raise HTTPException(status_code=404, detail="Processo não encontrado")
     update_data = update.model_dump(exclude_unset=True)
@@ -84,7 +85,7 @@ def get_processo(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    p = db.query(Processo).filter(Processo.id == processo_id).first()
+    p = db.query(Processo).filter(Processo.id == _uuid.UUID(processo_id)).first()
     if not p:
         raise HTTPException(status_code=404, detail="Processo não encontrado")
     return p

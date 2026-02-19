@@ -1,4 +1,5 @@
 from typing import List, Optional
+import uuid as _uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -8,14 +9,9 @@ from app.models.gaiola import Gaiola, StatusGaiola
 from app.schemas.pesagem import PesagemCreate, PesagemBalanca, PesagemResponse
 from app.utils.dependencies import get_current_active_user
 from app.models.user import Usuario
+from app.services import balanca_service, notificacao_service
 
 router = APIRouter(prefix="/api/v1/pesagens", tags=["pesagens"])
-
-STATUS_MAP = {
-    TipoPesagem.SAIDA_HOSPITAL: StatusGaiola.EM_TRANSPORTE_IDA,
-    TipoPesagem.RECEBIMENTO_LAVANDERIA: StatusGaiola.RECEBIDA_LAVANDERIA,
-    TipoPesagem.EXPEDICAO: StatusGaiola.PRONTA_EXPEDICAO,
-}
 
 
 def _build_response(p: Pesagem) -> dict:
@@ -58,20 +54,23 @@ def create_pesagem(
     gaiola = db.query(Gaiola).filter(Gaiola.id == pesagem.gaiola_id).first()
     if not gaiola:
         raise HTTPException(status_code=404, detail="Gaiola não encontrada")
-    db_pesagem = Pesagem(
-        gaiola_id=pesagem.gaiola_id,
+    status_anterior = gaiola.status.value
+    db_pesagem = balanca_service.registrar_pesagem(
+        db=db,
+        gaiola=gaiola,
         tipo_pesagem=pesagem.tipo_pesagem,
         peso=pesagem.peso,
         balanca_id=pesagem.balanca_id,
-        observacoes=pesagem.observacoes,
         usuario_id=current_user.id,
+        observacoes=pesagem.observacoes,
     )
-    db.add(db_pesagem)
-    new_status = STATUS_MAP.get(pesagem.tipo_pesagem)
-    if new_status:
-        gaiola.status = new_status
-    db.commit()
-    db.refresh(db_pesagem)
+    if gaiola.status.value != status_anterior:
+        notificacao_service.notificar_mudanca_status(
+            gaiola_codigo=gaiola.codigo,
+            status_anterior=status_anterior,
+            status_novo=gaiola.status.value,
+            usuario=current_user.email,
+        )
     return _build_response(db_pesagem)
 
 
@@ -84,20 +83,21 @@ def pesagem_balanca(
     gaiola = db.query(Gaiola).filter(Gaiola.codigo == pesagem_data.gaiola_codigo).first()
     if not gaiola:
         raise HTTPException(status_code=404, detail=f"Gaiola '{pesagem_data.gaiola_codigo}' não encontrada")
-    ts = pesagem_data.timestamp or datetime.now(timezone.utc)
-    db_pesagem = Pesagem(
-        gaiola_id=gaiola.id,
+    status_anterior = gaiola.status.value
+    db_pesagem = balanca_service.registrar_pesagem(
+        db=db,
+        gaiola=gaiola,
         tipo_pesagem=pesagem_data.tipo_pesagem,
         peso=pesagem_data.peso,
         balanca_id=pesagem_data.balanca_id,
-        timestamp=ts,
+        timestamp=pesagem_data.timestamp,
     )
-    db.add(db_pesagem)
-    new_status = STATUS_MAP.get(pesagem_data.tipo_pesagem)
-    if new_status:
-        gaiola.status = new_status
-    db.commit()
-    db.refresh(db_pesagem)
+    if gaiola.status.value != status_anterior:
+        notificacao_service.notificar_mudanca_status(
+            gaiola_codigo=gaiola.codigo,
+            status_anterior=status_anterior,
+            status_novo=gaiola.status.value,
+        )
     return _build_response(db_pesagem)
 
 
@@ -107,7 +107,7 @@ def get_pesagem(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    p = db.query(Pesagem).filter(Pesagem.id == pesagem_id).first()
+    p = db.query(Pesagem).filter(Pesagem.id == _uuid.UUID(pesagem_id)).first()
     if not p:
         raise HTTPException(status_code=404, detail="Pesagem não encontrada")
     return _build_response(p)

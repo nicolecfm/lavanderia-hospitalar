@@ -1,4 +1,5 @@
 from typing import List, Optional
+import uuid as _uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -47,7 +48,7 @@ def get_hospital(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+    hospital = db.query(Hospital).filter(Hospital.id == _uuid.UUID(hospital_id)).first()
     if not hospital:
         raise HTTPException(status_code=404, detail="Hospital não encontrado")
     return hospital
@@ -60,7 +61,7 @@ def update_hospital(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+    hospital = db.query(Hospital).filter(Hospital.id == _uuid.UUID(hospital_id)).first()
     if not hospital:
         raise HTTPException(status_code=404, detail="Hospital não encontrado")
     update_data = hospital_update.model_dump(exclude_unset=True)
@@ -77,7 +78,7 @@ def delete_hospital(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+    hospital = db.query(Hospital).filter(Hospital.id == _uuid.UUID(hospital_id)).first()
     if not hospital:
         raise HTTPException(status_code=404, detail="Hospital não encontrado")
     hospital.ativo = False

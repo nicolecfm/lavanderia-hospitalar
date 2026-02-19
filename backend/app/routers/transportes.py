@@ -1,4 +1,5 @@
 from typing import List, Optional
+import uuid as _uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -63,7 +64,7 @@ def update_transporte(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    transporte = db.query(Transporte).filter(Transporte.id == transporte_id).first()
+    transporte = db.query(Transporte).filter(Transporte.id == _uuid.UUID(transporte_id)).first()
     if not transporte:
         raise HTTPException(status_code=404, detail="Transporte não encontrado")
     update_data = update.model_dump(exclude_unset=True)
@@ -85,7 +86,7 @@ def get_transporte(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    t = db.query(Transporte).filter(Transporte.id == transporte_id).first()
+    t = db.query(Transporte).filter(Transporte.id == _uuid.UUID(transporte_id)).first()
     if not t:
         raise HTTPException(status_code=404, detail="Transporte não encontrado")
     return _build_response(t)
