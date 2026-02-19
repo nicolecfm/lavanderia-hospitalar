@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, DateTime, Text, Enum as SAEnum, ForeignKey, Numeric
+from sqlalchemy import Column, String, DateTime, Text, Enum as SAEnum, ForeignKey, Numeric, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
@@ -23,6 +23,8 @@ class Pesagem(Base):
     balanca_id = Column(String(100), nullable=True)
     timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     usuario_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=True)
+    divergencia_percentual = Column(Numeric(5, 2), nullable=True)
+    alerta_divergencia = Column(Boolean, default=False, nullable=False)
     observacoes = Column(Text, nullable=True)
 
     gaiola = relationship("Gaiola", back_populates="pesagens")

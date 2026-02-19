@@ -72,6 +72,8 @@ def upgrade() -> None:
         sa.Column("balanca_id", sa.String(100), nullable=True),
         sa.Column("timestamp", sa.DateTime(timezone=True)),
         sa.Column("usuario_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("usuarios.id"), nullable=True),
+        sa.Column("divergencia_percentual", sa.Numeric(5, 2), nullable=True),
+        sa.Column("alerta_divergencia", sa.Boolean, nullable=False, server_default="false"),
         sa.Column("observacoes", sa.Text, nullable=True),
     )
 
