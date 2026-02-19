@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Pesagens - Lavanderia Hospitalar{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="fw-bold"><i class="bi bi-bar-chart-line me-2 text-primary"></i>Pesagens</h2>
+        <p class="text-muted">Histórico de pesagens registradas no sistema</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Gaiola</th>
+                        <th>Tipo</th>
+                        <th>Peso (kg)</th>
+                        <th>Balança</th>
+                        <th>Data/Hora</th>
+                        <th>Observações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in pesagens %}
+                <tr>
+                    <td class="fw-semibold">{{ p.gaiola.codigo if p.gaiola else p.gaiola_id }}</td>
+                    <td>
+                        <span class="badge bg-info text-dark">
+                            {{ p.tipo_pesagem.value | replace('_', ' ') }}
+                        </span>
+                    </td>
+                    <td class="fw-semibold">{{ "%.3f"|format(p.peso|float) }}</td>
+                    <td class="text-muted small">{{ p.balanca_id or '-' }}</td>
+                    <td class="text-muted small">
+                        {{ p.timestamp.strftime('%d/%m/%Y %H:%M:%S') if p.timestamp else '-' }}
+                    </td>
+                    <td class="text-muted small">{{ p.observacoes or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                        Nenhuma pesagem registrada
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

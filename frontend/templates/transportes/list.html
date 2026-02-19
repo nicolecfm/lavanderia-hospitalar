@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Transportes - Lavanderia Hospitalar{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="fw-bold"><i class="bi bi-truck me-2 text-primary"></i>Transportes</h2>
+        <p class="text-muted">Histórico de transportes realizados</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Gaiola</th>
+                        <th>Tipo</th>
+                        <th>Motorista</th>
+                        <th>Veículo</th>
+                        <th>Saída</th>
+                        <th>Chegada</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for t in transportes %}
+                <tr>
+                    <td class="fw-semibold">{{ t.gaiola.codigo if t.gaiola else t.gaiola_id }}</td>
+                    <td>
+                        <span class="badge bg-warning text-dark">{{ t.tipo.value }}</span>
+                    </td>
+                    <td>{{ t.motorista or '-' }}</td>
+                    <td>{{ t.veiculo or '-' }}</td>
+                    <td class="text-muted small">
+                        {{ t.data_saida.strftime('%d/%m/%Y %H:%M') if t.data_saida else '-' }}
+                    </td>
+                    <td class="text-muted small">
+                        {{ t.data_chegada.strftime('%d/%m/%Y %H:%M') if t.data_chegada else '-' }}
+                    </td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if t.status.value == 'entregue' else 'warning text-dark' }}">
+                            {{ t.status.value }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                        Nenhum transporte registrado
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

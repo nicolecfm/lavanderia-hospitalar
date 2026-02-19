@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Gaiolas - Lavanderia Hospitalar{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="fw-bold"><i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Gaiolas</h2>
+        <p class="text-muted">Gerencie as gaiolas e acompanhe seu status</p>
+    </div>
+    <div class="col-auto">
+        <a href="/gaiolas/nova" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nova Gaiola
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Buscar por código</label>
+                <input type="text" id="filtroTexto" class="form-control" placeholder="Ex: GAI-001">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Filtrar por status</label>
+                <select id="filtroStatus" class="form-select">
+                    <option value="">Todos</option>
+                    {% for s in status_list %}
+                    <option value="{{ s }}">{{ s | replace('_', ' ') }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Filtrar por hospital</label>
+                <select id="filtroHospital" class="form-select">
+                    <option value="">Todos</option>
+                    {% for h in hospitais %}
+                    <option value="{{ h.nome }}">{{ h.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button onclick="limparFiltros()" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-x-circle me-1"></i>Limpar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="tabelaGaiolas">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Hospital</th>
+                        <th>Status</th>
+                        <th>Data Criação</th>
+                        <th>Observações</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for g in gaiolas %}
+                <tr data-codigo="{{ g.codigo }}" data-status="{{ g.status.value }}"
+                    data-hospital="{{ g.hospital.nome if g.hospital else '' }}">
+                    <td>
+                        <span class="fw-semibold">{{ g.codigo }}</span>
+                    </td>
+                    <td>{{ g.hospital.nome if g.hospital else "-" }}</td>
+                    <td>
+                        <span class="badge status-badge-{{ g.status.value | lower | replace('_', '-') }}">
+                            {{ g.status.value | replace('_', ' ') }}
+                        </span>
+                    </td>
+                    <td class="text-muted small">
+                        {{ g.data_criacao.strftime('%d/%m/%Y %H:%M') if g.data_criacao else '-' }}
+                    </td>
+                    <td class="text-muted small">{{ g.observacoes or '-' }}</td>
+                    <td>
+                        <a href="/gaiolas/{{ g.id }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>Detalhes
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                        Nenhuma gaiola cadastrada
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function filtrarTabela() {
+    const texto = document.getElementById('filtroTexto').value.toLowerCase();
+    const status = document.getElementById('filtroStatus').value;
+    const hospital = document.getElementById('filtroHospital').value;
+    document.querySelectorAll('#tabelaGaiolas tbody tr').forEach(row => {
+        const codigo = (row.dataset.codigo || '').toLowerCase();
+        const rowStatus = row.dataset.status || '';
+        const rowHospital = row.dataset.hospital || '';
+        const show = (!texto || codigo.includes(texto)) &&
+                     (!status || rowStatus === status) &&
+                     (!hospital || rowHospital === hospital);
+        row.style.display = show ? '' : 'none';
+    });
+}
+function limparFiltros() {
+    document.getElementById('filtroTexto').value = '';
+    document.getElementById('filtroStatus').value = '';
+    document.getElementById('filtroHospital').value = '';
+    filtrarTabela();
+}
+document.getElementById('filtroTexto').addEventListener('input', filtrarTabela);
+document.getElementById('filtroStatus').addEventListener('change', filtrarTabela);
+document.getElementById('filtroHospital').addEventListener('change', filtrarTabela);
+</script>
+{% endblock %}

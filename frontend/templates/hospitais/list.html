@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Hospitais - Lavanderia Hospitalar{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="fw-bold"><i class="bi bi-building-cross me-2 text-primary"></i>Hospitais / Clientes</h2>
+        <p class="text-muted">Cadastro de hospitais e clientes</p>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoHospital">
+            <i class="bi bi-plus-lg me-1"></i>Novo Hospital
+        </button>
+    </div>
+</div>
+
+<div id="alertContainer"></div>
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>CNPJ</th>
+                        <th>Telefone</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for h in hospitais %}
+                <tr>
+                    <td class="fw-semibold">{{ h.nome }}</td>
+                    <td class="text-muted">{{ h.cnpj or '-' }}</td>
+                    <td class="text-muted">{{ h.telefone or '-' }}</td>
+                    <td class="text-muted">{{ h.email or '-' }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if h.ativo else 'secondary' }}">
+                            {{ 'Ativo' if h.ativo else 'Inativo' }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary"
+                                onclick="editarHospital('{{ h.id }}', '{{ h.nome }}', '{{ h.cnpj or '' }}', '{{ h.endereco or '' }}', '{{ h.telefone or '' }}', '{{ h.email or '' }}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                        Nenhum hospital cadastrado
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Novo Hospital -->
+<div class="modal fade" id="modalNovoHospital" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Novo Hospital</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formHospital">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="hNome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">CNPJ</label>
+                        <input type="text" class="form-control" id="hCnpj" placeholder="00.000.000/0000-00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Endereço</label>
+                        <input type="text" class="form-control" id="hEndereco">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Telefone</label>
+                        <input type="text" class="form-control" id="hTelefone">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" class="form-control" id="hEmail">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarHospital()">
+                    <i class="bi bi-save me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let editId = null;
+function editarHospital(id, nome, cnpj, end, tel, email) {
+    editId = id;
+    document.getElementById('hNome').value = nome;
+    document.getElementById('hCnpj').value = cnpj;
+    document.getElementById('hEndereco').value = end;
+    document.getElementById('hTelefone').value = tel;
+    document.getElementById('hEmail').value = email;
+    new bootstrap.Modal(document.getElementById('modalNovoHospital')).show();
+}
+async function salvarHospital() {
+    const token = getCookie('access_token');
+    const data = {
+        nome: document.getElementById('hNome').value,
+        cnpj: document.getElementById('hCnpj').value || null,
+        endereco: document.getElementById('hEndereco').value || null,
+        telefone: document.getElementById('hTelefone').value || null,
+        email: document.getElementById('hEmail').value || null,
+    };
+    const url = editId ? `/api/v1/hospitais/${editId}` : '/api/v1/hospitais/';
+    const method = editId ? 'PUT' : 'POST';
+    const resp = await fetch(url, {
+        method,
+        headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+        body: JSON.stringify(data)
+    });
+    const json = await resp.json();
+    if (resp.ok) {
+        bootstrap.Modal.getInstance(document.getElementById('modalNovoHospital')).hide();
+        showAlert('Hospital salvo com sucesso!', 'success');
+        setTimeout(() => location.reload(), 1200);
+    } else {
+        showAlert(json.detail || 'Erro ao salvar', 'danger');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Lavanderia Hospitalar{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="fw-bold"><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard</h2>
+        <p class="text-muted">Visão geral do sistema em tempo real</p>
+    </div>
+    <div class="col-auto">
+        <a href="/gaiolas/nova" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nova Gaiola
+        </a>
+    </div>
+</div>
+
+{% if alertas %}
+<div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Alertas de Divergência de Peso:</strong>
+    {% for a in alertas %}
+    <span class="badge bg-warning text-dark ms-1">{{ a.gaiola }}: {{ a.divergencia }}%</span>
+    {% endfor %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small fw-semibold text-uppercase">Em Trânsito</p>
+                        <h3 class="fw-bold mb-0 text-warning">{{ stats.em_transito }}</h3>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-truck text-warning fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small fw-semibold text-uppercase">Em Processamento</p>
+                        <h3 class="fw-bold mb-0 text-info">{{ stats.em_processamento }}</h3>
+                    </div>
+                    <div class="bg-info bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-arrow-repeat text-info fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small fw-semibold text-uppercase">Prontas Expedição</p>
+                        <h3 class="fw-bold mb-0 text-success">{{ stats.prontas_expedicao }}</h3>
+                    </div>
+                    <div class="bg-success bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-check-circle text-success fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small fw-semibold text-uppercase">Peso Hoje (kg)</p>
+                        <h3 class="fw-bold mb-0 text-primary">{{ stats.peso_hoje }}</h3>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-bar-chart-line text-primary fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Gaiolas -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-0 pt-4 pb-0">
+        <h5 class="fw-bold mb-0"><i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Gaiolas Recentes</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Hospital</th>
+                        <th>Status</th>
+                        <th>Data Criação</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for g in gaiolas_recentes %}
+                <tr>
+                    <td><span class="fw-semibold">{{ g.codigo }}</span></td>
+                    <td>{{ g.hospital.nome if g.hospital else "-" }}</td>
+                    <td>
+                        <span class="badge status-badge-{{ g.status.value | lower | replace('_', '-') }}">
+                            {{ g.status.value | replace('_', ' ') }}
+                        </span>
+                    </td>
+                    <td class="text-muted small">{{ g.data_criacao.strftime('%d/%m/%Y %H:%M') if g.data_criacao else '-' }}</td>
+                    <td>
+                        <a href="/gaiolas/{{ g.id }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                        Nenhuma gaiola cadastrada
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

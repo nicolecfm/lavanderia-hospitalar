@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Relatórios - Lavanderia Hospitalar{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="fw-bold"><i class="bi bi-file-earmark-spreadsheet me-2 text-primary"></i>Relatórios</h2>
+        <p class="text-muted">Geração de relatórios e exportação de dados</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Relatório de Expedição -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Relatório de Expedição</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Exporta dados completos de gaiolas com informações de pesagem e divergências.</p>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Data Início</label>
+                    <input type="date" class="form-control" id="dataInicio">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Data Fim</label>
+                    <input type="date" class="form-control" id="dataFim">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Hospital</label>
+                    <select class="form-select" id="hospitalRelatorio">
+                        <option value="">Todos os hospitais</option>
+                        {% for h in hospitais %}
+                        <option value="{{ h.id }}">{{ h.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success" onclick="exportar('excel')">
+                        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                    </button>
+                    <button class="btn btn-outline-success" onclick="exportar('csv')">
+                        <i class="bi bi-file-earmark-text me-1"></i>CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatório de Divergências -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Relatório de Divergências</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Lista gaiolas com divergência de peso acima do limite configurado.</p>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Limite de Divergência (%)</label>
+                    <input type="number" class="form-control" id="limiteDiv" value="5" min="0" max="100" step="0.1">
+                </div>
+                <button class="btn btn-warning" onclick="buscarDivergencias()">
+                    <i class="bi bi-search me-1"></i>Buscar Divergências
+                </button>
+                <div id="tabelaDivergencias" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function exportar(formato) {
+    const inicio = document.getElementById('dataInicio').value;
+    const fim = document.getElementById('dataFim').value;
+    const hospital = document.getElementById('hospitalRelatorio').value;
+    const token = getCookie('access_token');
+    let url = `/api/v1/relatorios/expedicao/${formato}?`;
+    if (inicio) url += `data_inicio=${inicio}&`;
+    if (fim) url += `data_fim=${fim}&`;
+    if (hospital) url += `hospital_id=${hospital}&`;
+
+    fetch(url, {headers: {'Authorization': `Bearer ${token}`}})
+        .then(r => r.blob())
+        .then(blob => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `relatorio_expedicao.${formato === 'excel' ? 'xlsx' : 'csv'}`;
+            a.click();
+        });
+}
+
+async function buscarDivergencias() {
+    const token = getCookie('access_token');
+    const limite = document.getElementById('limiteDiv').value;
+    const resp = await fetch(`/api/v1/relatorios/divergencias?limite_percentual=${limite}`,
+        {headers: {'Authorization': `Bearer ${token}`}});
+    const data = await resp.json();
+    const container = document.getElementById('tabelaDivergencias');
+    if (!data.length) {
+        container.innerHTML = '<p class="text-muted text-center">Nenhuma divergência encontrada</p>';
+        return;
+    }
+    let html = `<div class="table-responsive"><table class="table table-sm table-hover">
+        <thead class="table-light"><tr><th>Gaiola</th><th>Hospital</th><th>Saída (kg)</th><th>Expedição (kg)</th><th>Divergência</th></tr></thead><tbody>`;
+    data.forEach(d => {
+        html += `<tr>
+            <td class="fw-semibold">${d.gaiola_codigo}</td>
+            <td>${d.hospital}</td>
+            <td>${d.peso_saida}</td>
+            <td>${d.peso_expedicao}</td>
+            <td><span class="badge bg-warning text-dark">${d.divergencia_percentual}%</span></td>
+        </tr>`;
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+</script>
+{% endblock %}

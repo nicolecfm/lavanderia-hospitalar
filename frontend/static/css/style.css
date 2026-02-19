@@ -1,0 +1,86 @@
+/* Lavanderia Hospitalar - Custom Styles */
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Status Badges */
+.status-badge-criada { background-color: #6c757d; color: #fff; padding: .35em .65em; border-radius: .375rem; font-size: .75em; font-weight: 600; }
+.status-badge-em-transporte-ida { background-color: #fd7e14; color: #fff; padding: .35em .65em; border-radius: .375rem; font-size: .75em; font-weight: 600; }
+.status-badge-recebida-lavanderia { background-color: #0dcaf0; color: #000; padding: .35em .65em; border-radius: .375rem; font-size: .75em; font-weight: 600; }
+.status-badge-em-separacao { background-color: #6f42c1; color: #fff; padding: .35em .65em; border-radius: .375rem; font-size: .75em; font-weight: 600; }
+.status-badge-em-lavagem { background-color: #0d6efd; color: #fff; padding: .35em .65em; border-radius: .375rem; font-size: .75em; font-weight: 600; }
+.status-badge-em-secagem { background-color: #d63384; color: #fff; padding: .35em .65em; border-radius: .375rem; font-size: .75em; font-weight: 600; }
+.status-badge-em-dobra { background-color: #20c997; color: #000; padding: .35em .65em; border-radius: .375rem; font-size: .75em; font-weight: 600; }
+.status-badge-pronta-expedicao { background-color: #198754; color: #fff; padding: .35em .65em; border-radius: .375rem; font-size: .75em; font-weight: 600; }
+.status-badge-em-transporte-volta { background-color: #e35d6a; color: #fff; padding: .35em .65em; border-radius: .375rem; font-size: .75em; font-weight: 600; }
+.status-badge-entregue { background-color: #157347; color: #fff; padding: .35em .65em; border-radius: .375rem; font-size: .75em; font-weight: 600; }
+
+/* Cards */
+.card {
+    transition: transform 0.1s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-1px);
+}
+
+/* Navbar */
+.navbar-brand {
+    font-size: 1.1rem;
+}
+
+/* Tables */
+.table th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+    padding: 0;
+    list-style: none;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 1.5rem;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 3.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-icon {
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    z-index: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
