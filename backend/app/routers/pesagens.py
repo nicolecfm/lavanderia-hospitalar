@@ -63,7 +63,7 @@ def create_pesagem(
         tipo_pesagem=pesagem.tipo_pesagem,
         peso=pesagem.peso,
         balanca_id=pesagem.balanca_id,
-        usuario_id=current_user.id,
+        usuario_id=current_user.id if current_user else None,
         observacoes=pesagem.observacoes,
     )
     if gaiola.status.value != status_anterior:
@@ -71,7 +71,7 @@ def create_pesagem(
             gaiola_codigo=gaiola.codigo,
             status_anterior=status_anterior,
             status_novo=gaiola.status.value,
-            usuario=current_user.email,
+            usuario=current_user.email if current_user else None,
         )
     return _build_response(db_pesagem)
 

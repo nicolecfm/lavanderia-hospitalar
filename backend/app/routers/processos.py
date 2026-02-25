@@ -48,7 +48,7 @@ def create_processo(
         etapa=processo.etapa,
         maquina_id=processo.maquina_id,
         observacoes=processo.observacoes,
-        usuario_id=current_user.id,
+        usuario_id=current_user.id if current_user else None,
     )
     db.add(db_processo)
     new_status = ETAPA_STATUS_MAP.get(processo.etapa)

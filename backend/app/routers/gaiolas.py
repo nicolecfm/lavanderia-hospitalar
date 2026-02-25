@@ -107,7 +107,7 @@ def update_gaiola(
             gaiola_codigo=gaiola.codigo,
             status_anterior=status_anterior,
             status_novo=gaiola.status.value,
-            usuario=current_user.email,
+            usuario=current_user.email if current_user else None,
         )
     return _build_response(gaiola)
 

@@ -78,10 +78,7 @@ app.include_router(_notif_router)
 
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request):
-    user = get_optional_user(request, next(get_db()))
-    if user:
-        return RedirectResponse(url="/dashboard")
-    return RedirectResponse(url="/login")
+    return RedirectResponse(url="/dashboard")
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -111,7 +108,7 @@ async def login_submit(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/logout")
 def logout():
-    response = RedirectResponse(url="/login", status_code=302)
+    response = RedirectResponse(url="/dashboard", status_code=302)
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
     return response
@@ -120,8 +117,6 @@ def logout():
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
 
     today = datetime.now(timezone.utc).date()
     total_peso_hoje = 0.0
@@ -174,8 +169,6 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 @app.get("/gaiolas", response_class=HTMLResponse)
 def gaiolas_page(request: Request, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
     all_gaiolas = db.query(Gaiola).order_by(Gaiola.data_criacao.desc()).all()
     hospitais = db.query(Hospital).filter(Hospital.ativo == True).all()  # noqa: E712
     return templates.TemplateResponse("gaiolas/list.html", {
@@ -190,8 +183,6 @@ def gaiolas_page(request: Request, db: Session = Depends(get_db)):
 @app.get("/gaiolas/nova", response_class=HTMLResponse)
 def gaiola_create_page(request: Request, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
     hospitais = db.query(Hospital).filter(Hospital.ativo == True).all()  # noqa: E712
     return templates.TemplateResponse("gaiolas/create.html", {
         "request": request,
@@ -203,8 +194,6 @@ def gaiola_create_page(request: Request, db: Session = Depends(get_db)):
 @app.get("/gaiolas/{gaiola_id}", response_class=HTMLResponse)
 def gaiola_detail_page(request: Request, gaiola_id: str, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
     gaiola = db.query(Gaiola).filter(Gaiola.id == gaiola_id).first()
     if not gaiola:
         raise HTTPException(status_code=404, detail="Gaiola não encontrada")
@@ -219,8 +208,6 @@ def gaiola_detail_page(request: Request, gaiola_id: str, db: Session = Depends(g
 @app.get("/hospitais", response_class=HTMLResponse)
 def hospitais_page(request: Request, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
     all_hospitais = db.query(Hospital).order_by(Hospital.nome).all()
     return templates.TemplateResponse("hospitais/list.html", {
         "request": request,
@@ -232,8 +219,6 @@ def hospitais_page(request: Request, db: Session = Depends(get_db)):
 @app.get("/hospitais/novo", response_class=HTMLResponse)
 def hospital_create_page(request: Request, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
     return templates.TemplateResponse("hospitais/form.html", {
         "request": request,
         "user": user,
@@ -244,8 +229,6 @@ def hospital_create_page(request: Request, db: Session = Depends(get_db)):
 @app.get("/hospitais/{hospital_id}", response_class=HTMLResponse)
 def hospital_detail_page(request: Request, hospital_id: str, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
     hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
     if not hospital:
         raise HTTPException(status_code=404, detail="Hospital não encontrado")
@@ -260,8 +243,6 @@ def hospital_detail_page(request: Request, hospital_id: str, db: Session = Depen
 @app.get("/hospitais/{hospital_id}/editar", response_class=HTMLResponse)
 def hospital_edit_page(request: Request, hospital_id: str, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
     hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
     if not hospital:
         raise HTTPException(status_code=404, detail="Hospital não encontrado")
@@ -275,8 +256,6 @@ def hospital_edit_page(request: Request, hospital_id: str, db: Session = Depends
 @app.get("/pesagens", response_class=HTMLResponse)
 def pesagens_page(request: Request, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
     all_pesagens = db.query(Pesagem).order_by(Pesagem.timestamp.desc()).limit(100).all()
     return templates.TemplateResponse("pesagens/list.html", {
         "request": request,
@@ -289,8 +268,6 @@ def pesagens_page(request: Request, db: Session = Depends(get_db)):
 def transportes_page(request: Request, db: Session = Depends(get_db)):
     from app.models.transporte import Transporte
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
     all_transportes = db.query(Transporte).order_by(Transporte.data_saida.desc()).limit(100).all()
     return templates.TemplateResponse("transportes/list.html", {
         "request": request,
@@ -302,8 +279,6 @@ def transportes_page(request: Request, db: Session = Depends(get_db)):
 @app.get("/relatorios", response_class=HTMLResponse)
 def relatorios_page(request: Request, db: Session = Depends(get_db)):
     user = _get_user_or_redirect(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
     hospitais = db.query(Hospital).filter(Hospital.ativo == True).all()  # noqa: E712
     return templates.TemplateResponse("relatorios/index.html", {
         "request": request,
@@ -313,7 +288,4 @@ def relatorios_page(request: Request, db: Session = Depends(get_db)):
 
 
 def _get_user_or_redirect(request: Request, db: Session):
-    user = get_optional_user(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=302)
-    return user
+    return get_optional_user(request, db)

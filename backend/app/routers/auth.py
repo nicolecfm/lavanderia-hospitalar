@@ -35,7 +35,7 @@ def create_usuario(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_active_user)
 ):
-    if current_user.tipo_usuario.value != "admin":
+    if current_user and current_user.tipo_usuario.value != "admin":
         raise HTTPException(status_code=403, detail="Apenas administradores podem criar usuários")
     existing = db.query(Usuario).filter(Usuario.email == usuario.email).first()
     if existing:
