@@ -23,6 +23,8 @@ def _build_response(p: Pesagem) -> dict:
         "balanca_id": p.balanca_id,
         "timestamp": p.timestamp,
         "usuario_id": p.usuario_id,
+        "divergencia_percentual": float(p.divergencia_percentual) if p.divergencia_percentual is not None else None,
+        "alerta_divergencia": p.alerta_divergencia or False,
         "observacoes": p.observacoes,
         "gaiola_codigo": p.gaiola.codigo if p.gaiola else None,
     }
@@ -61,7 +63,7 @@ def create_pesagem(
         tipo_pesagem=pesagem.tipo_pesagem,
         peso=pesagem.peso,
         balanca_id=pesagem.balanca_id,
-        usuario_id=current_user.id,
+        usuario_id=current_user.id if current_user else None,
         observacoes=pesagem.observacoes,
     )
     if gaiola.status.value != status_anterior:
@@ -69,7 +71,7 @@ def create_pesagem(
             gaiola_codigo=gaiola.codigo,
             status_anterior=status_anterior,
             status_novo=gaiola.status.value,
-            usuario=current_user.email,
+            usuario=current_user.email if current_user else None,
         )
     return _build_response(db_pesagem)
 

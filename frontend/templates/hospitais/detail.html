@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ hospital.nome }} - Lavanderia Hospitalar{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="fw-bold">
+            <i class="bi bi-building-cross me-2 text-primary"></i>{{ hospital.nome }}
+        </h2>
+        <p class="text-muted">Detalhes do hospital/cliente</p>
+    </div>
+    <div class="col-auto d-flex gap-2">
+        <a href="/hospitais" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+        <a href="/hospitais/{{ hospital.id }}/editar" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i>Editar
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Informações principais -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0"><i class="bi bi-info-circle me-2 text-primary"></i>Informações</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5 text-muted">Nome</dt>
+                    <dd class="col-7">{{ hospital.nome }}</dd>
+
+                    <dt class="col-5 text-muted">CNPJ</dt>
+                    <dd class="col-7">{{ hospital.cnpj or '-' }}</dd>
+
+                    <dt class="col-5 text-muted">Endereço</dt>
+                    <dd class="col-7">{{ hospital.endereco or '-' }}</dd>
+
+                    <dt class="col-5 text-muted">Telefone</dt>
+                    <dd class="col-7">{{ hospital.telefone or '-' }}</dd>
+
+                    <dt class="col-5 text-muted">Email</dt>
+                    <dd class="col-7">{{ hospital.email or '-' }}</dd>
+
+                    <dt class="col-5 text-muted">Status</dt>
+                    <dd class="col-7">
+                        <span class="badge bg-{{ 'success' if hospital.ativo else 'secondary' }}">
+                            {{ 'Ativo' if hospital.ativo else 'Inativo' }}
+                        </span>
+                    </dd>
+
+                    <dt class="col-5 text-muted">Cadastro</dt>
+                    <dd class="col-7">
+                        {{ hospital.created_at.strftime('%d/%m/%Y %H:%M') if hospital.created_at else '-' }}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gaiolas do hospital -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Gaiolas</h5>
+                <span class="badge bg-primary rounded-pill">{{ gaiolas|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if gaiolas %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Status</th>
+                                <th>Criação</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for g in gaiolas %}
+                        <tr>
+                            <td class="fw-semibold">{{ g.codigo }}</td>
+                            <td>
+                                <span class="badge status-badge {{ g.status.value }}">{{ g.status.value }}</span>
+                            </td>
+                            <td class="text-muted small">
+                                {{ g.data_criacao.strftime('%d/%m/%Y %H:%M') if g.data_criacao else '-' }}
+                            </td>
+                            <td>
+                                <a href="/gaiolas/{{ g.id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4 mb-0">
+                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                    Nenhuma gaiola cadastrada para este hospital.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

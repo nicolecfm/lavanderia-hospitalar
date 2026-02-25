@@ -30,6 +30,8 @@ class PesagemResponse(PesagemBase):
     id: uuid.UUID
     timestamp: datetime
     usuario_id: Optional[uuid.UUID] = None
+    divergencia_percentual: Optional[float] = None
+    alerta_divergencia: bool = False
     gaiola_codigo: Optional[str] = None
 
     model_config = {"from_attributes": True}

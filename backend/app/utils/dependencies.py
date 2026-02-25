@@ -5,33 +5,26 @@ from app.database import get_db
 from app.models.user import Usuario
 from app.utils.security import decode_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
+# auto_error=False so the token is optional – no 401 when the header is absent
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token", auto_error=False)
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
-) -> Usuario:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Credenciais inválidas",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+) -> Usuario | None:
+    if not token:
+        return None
     payload = decode_token(token)
     if payload is None:
-        raise credentials_exception
+        return None
     email: str = payload.get("sub")
     if email is None:
-        raise credentials_exception
-    user = db.query(Usuario).filter(Usuario.email == email, Usuario.ativo == True).first()  # noqa: E712
-    if user is None:
-        raise credentials_exception
-    return user
+        return None
+    return db.query(Usuario).filter(Usuario.email == email, Usuario.ativo == True).first()  # noqa: E712
 
 
-def get_current_active_user(current_user: Usuario = Depends(get_current_user)) -> Usuario:
-    if not current_user.ativo:
-        raise HTTPException(status_code=400, detail="Usuário inativo")
+def get_current_active_user(current_user: Usuario | None = Depends(get_current_user)) -> Usuario | None:
     return current_user
 
 
